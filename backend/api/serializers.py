@@ -183,7 +183,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для ингредиентов в рецептах"""
 
-    id = serializers.IntegerField()
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
     amount = serializers.IntegerField()
 
     @staticmethod
@@ -249,8 +249,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         """Метод создания ингредиента"""
 
         for element in ingredients:
-            id = element['id']
-            ingredient = Ingredient.objects.get(pk=id)
+            ingredient = element['id']
             amount = element['amount']
             RecipeIngredient.objects.create(
                 ingredient=ingredient, recipe=recipe, amount=amount
