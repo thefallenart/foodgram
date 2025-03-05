@@ -1,4 +1,3 @@
-from django.core.cache import cache
 from django.db.models import Sum, Prefetch
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -196,106 +195,87 @@ class RecipeViewSet(ModelViewSet):
         queryset = Recipe.objects.all()
         if user.is_authenticated:
             queryset = queryset.prefetch_related(
-                Prefetch('favorites', queryset=Favorite.objects.filter(user=user)),
-                Prefetch('shopping_cart', queryset=ShoppingCart.objects.filter(user=user))
+                Prefetch(
+                    'favorites',
+                    queryset=Favorite.objects.filter(user=user)
+                ),
+                Prefetch(
+                    'shopping_cart',
+                    queryset=ShoppingCart.objects.filter(user=user)
+                )
             )
-        return queryset
+
+    def _handle_action(self, request, model, serializer_class, error_msg, pk):
+        """Общий метод для добавления/удаления объектов."""
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
+
+        if request.method == 'POST':
+            if model.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': error_msg.format(recipe.name)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            model.objects.create(user=user, recipe=recipe)
+            serializer = serializer_class(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            obj = model.objects.filter(user=user, recipe=recipe)
+            if obj.exists():
+                obj.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {'errors': f'Рецепт "{recipe.name}" не найден в списке.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(
         detail=True,
         methods=('post', 'delete'),
-        permission_classes=(IsAuthenticated,),
-        url_path='favorite',
-        url_name='favorite',
+        permission_classes=(IsAuthenticated,)
     )
     def favorite(self, request, pk):
-        """Метод для управления избранными подписками"""
-        user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
-
-        if request.method == 'POST':
-            if Favorite.objects.filter(user=user, recipe=recipe).exists():
-                return Response(
-                    {'errors': f'Повторно - \"{recipe.name}\" добавить нельзя, '
-                               f'он уже есть в избранном у пользователя'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Favorite.objects.create(user=user, recipe=recipe)
-            cache.delete(f'favorites_{user.id}')
-            serializer = AddFavoritesSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            obj = Favorite.objects.filter(user=user, recipe=recipe)
-            if obj.exists():
-                obj.delete()
-                cache.delete(f'favorites_{user.id}')
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'errors': f'В избранном нет рецепта \"{recipe.name}\"'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        """Добавление/удаление рецепта из избранного."""
+        return self._handle_action(
+            request, Favorite, AddFavoritesSerializer,
+            'Рецепт "{}" уже есть в избранном.', pk
+        )
 
     @action(
         detail=True,
         methods=('post', 'delete'),
-        permission_classes=(IsAuthenticated,),
-        url_path='shopping_cart',
-        url_name='shopping_cart',
+        permission_classes=(IsAuthenticated,)
     )
     def shopping_cart(self, request, pk):
-        """Метод для управления списком покупок"""
-        user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
-
-        if request.method == 'POST':
-            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-                return Response(
-                    {'errors': f'Повторно - \"{recipe.name}\" добавить нельзя, '
-                               f'он уже есть в списке покупок'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            ShoppingCart.objects.create(user=user, recipe=recipe)
-            serializer = AddFavoritesSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if request.method == 'DELETE':
-            obj = ShoppingCart.objects.filter(user=user, recipe__id=pk)
-            if obj.exists():
-                obj.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'errors': f'Нельзя удалить рецепт - \"{recipe.name}\", '
-                           f'которого нет в списке покупок '},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        """Добавление/удаление рецепта из списка покупок."""
+        return self._handle_action(
+            request, ShoppingCart, AddFavoritesSerializer,
+            'Рецепт "{}" уже есть в списке покупок.', pk
+        )
 
     @staticmethod
     def ingredients_to_txt(ingredients):
-        """Метод для объединения ингредиентов в список для загрузки"""
-        shopping_list = ''
-        for ingredient in ingredients:
-            shopping_list += (
-                f"{ingredient['ingredient__name']}  - "
-                f"{ingredient['sum']}"
-                f"({ingredient['ingredient__measurement_unit']})\n"
-            )
-        return shopping_list
+        """Формирование текстового списка ингредиентов."""
+        return '\n'.join(
+            f"{ingredient['ingredient__name']} - {ingredient['sum']} "
+            f"({ingredient['ingredient__measurement_unit']})"
+            for ingredient in ingredients
+        )
 
     @action(
         detail=False,
         methods=('get',),
-        permission_classes=(IsAuthenticated,),
-        url_path='download_shopping_cart',
-        url_name='download_shopping_cart',
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        """Метод для загрузки ингредиентов и их количества для выбранных рецептов"""
+        """Загрузка списка покупок в текстовом формате."""
         ingredients = RecipeIngredient.objects.filter(
-            recipe__in=ShoppingCart.objects.filter(user=request.user).values_list('recipe', flat=True)
+            recipe__shopping_cart__user=request.user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(sum=Sum('amount'))
+
         shopping_list = self.ingredients_to_txt(ingredients)
         return HttpResponse(shopping_list, content_type='text/plain')
