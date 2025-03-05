@@ -1,4 +1,3 @@
-import shortuuid
 from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -8,7 +7,7 @@ User = get_user_model()
 
 
 class Ingredient(models.Model):
-    """Модель для хранения информации об ингредиентах."""
+    """Модель ингредиентов."""
 
     class Meta:
         verbose_name = 'Ингредиент'
@@ -59,7 +58,7 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
-    """Модель для хранения рецептов."""
+    """Модель рецептов."""
 
     class Meta:
         ordering = ('-created',)
@@ -191,8 +190,6 @@ class TagInRecipe(models.Model):
         help_text='Выберите рецепт')
 
     class Meta:
-        """Мета-параметры модели"""
-
         verbose_name = 'Тег рецепта'
         verbose_name_plural = 'Теги рецепта'
         constraints = [
@@ -201,8 +198,6 @@ class TagInRecipe(models.Model):
         ]
 
     def __str__(self):
-        """Метод строкового представления модели."""
-
         return f'{self.tag} {self.recipe}'
 
 

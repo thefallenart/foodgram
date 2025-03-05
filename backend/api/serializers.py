@@ -1,7 +1,6 @@
 import base64
 import uuid
 from django.core.files.base import ContentFile
-from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from users.models import User
@@ -106,21 +105,13 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Сериализатор для тэгов."""
-
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = Tag
         fields = ('id', 'name', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для ингредиентов."""
-
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
@@ -132,6 +123,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
+    amount = serializers.IntegerField(min_value=1)
 
     class Meta:
         """Мета-параметры сериализатора"""
@@ -160,30 +152,26 @@ class RecipeSerializer(serializers.ModelSerializer):
                   )
 
     def get_is_favorited(self, obj):
-        """Метод проверки на добавление в избранное."""
-
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Favorite.objects.filter(
-            user=request.user, recipe=obj
-        ).exists()
+        """Проверка на добавление в избранное."""
+        user = self.context.get("request").user
+        return (
+            user.is_authenticated
+            and Favorite.objects.filter(user=user, recipe=obj).exists()
+        )
 
     def get_is_in_shopping_cart(self, obj):
-        """Метод проверки на присутствие в корзине."""
-
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return ShoppingCart.objects.filter(
-            user=request.user, recipe=obj
-        ).exists()
+        """Проверка на присутствие в корзине."""
+        user = self.context.get("request").user
+        return (
+            user.is_authenticated
+            and ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+        )
 
 
 class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для ингредиентов в рецептах"""
 
-    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    id = serializers.IntegerField()
     amount = serializers.IntegerField()
 
     @staticmethod
@@ -249,7 +237,8 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         """Метод создания ингредиента"""
 
         for element in ingredients:
-            ingredient = element['id']
+            id = element['id']
+            ingredient = Ingredient.objects.get(pk=id)
             amount = element['amount']
             RecipeIngredient.objects.create(
                 ingredient=ingredient, recipe=recipe, amount=amount
@@ -284,30 +273,21 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class AdditionalForRecipeSerializer(serializers.ModelSerializer):
-    """Дополнительный сериализатор для рецептов """
-
+class ShortRecipeSerializer(serializers.ModelSerializer):
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class AddFavoritesSerializer(serializers.ModelSerializer):
-    """Сериализатор для добавления в избранное по модели Recipe."""
     image = Base64ImageField()
 
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class FollowSerializer(UserReadSerializer):
-    """Сериализатор для модели Follow."""
-
     recipes = serializers.SerializerMethodField(
         read_only=True,
         method_name='get_recipes')
@@ -316,24 +296,21 @@ class FollowSerializer(UserReadSerializer):
     )
 
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count',)
 
     def get_recipes(self, obj):
-        """Метод для получения рецептов"""
-
-        request = self.context.get('request')
+        request = self.context.get("request")
+        recipes_limit = request.query_params.get("recipes_limit")
         recipes = obj.recipes.all()
-        recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit:
-            recipes = recipes[:int(recipes_limit)]
-        return AdditionalForRecipeSerializer(recipes, many=True).data
+            try:
+                recipes = recipes[:int(recipes_limit)]
+            except ValueError:
+                pass
+        return ShortRecipeSerializer(recipes, many=True).data
 
     @staticmethod
     def get_recipes_count(obj):
-        """Метод для получения количества рецептов"""
-
         return obj.recipes.count()

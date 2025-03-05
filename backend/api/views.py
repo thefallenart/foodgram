@@ -3,14 +3,12 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from foodgram.settings import FILE_NAME
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag, Follow)
-from rest_framework import filters, mixins, status, viewsets
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import mixins, status, viewsets
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from users.models import User
 
@@ -25,9 +23,6 @@ from .serializers import (UserCustomCreateSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
                           CreateRecipeSerializer,
-                          AdditionalForRecipeSerializer,
-                          CreateIngredientsInRecipeSerializer,
-                          IngredientInRecipeSerializer,
                           AddFavoritesSerializer,
                           FollowSerializer)
 

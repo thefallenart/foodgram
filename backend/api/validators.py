@@ -1,7 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions as django_exceptions
 from rest_framework import serializers
-from rest_framework.serializers import ValidationError
 
 
 INVALID_USERNAMES = {'me', 'monkey', 'idiot', 'bitch'}
@@ -35,4 +34,3 @@ def validate_new_password(new_password, current_password=None):
         raise PasswordValidationError(e.messages)
 
     return new_password
-
