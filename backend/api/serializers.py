@@ -142,8 +142,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart', 'name',
@@ -166,24 +164,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для ингредиентов в рецептах"""
+    """Сериализатор для ингредиентов в рецептах."""
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField()
-
-    @staticmethod
-    def validate_amount(value):
-        """Метод валидации количества"""
-
-        if value < 1:
-            raise serializers.ValidationError(
-                'Количество ингредиента должно быть больше 0!'
-            )
-        return value
+    amount = serializers.IntegerField(min_value=1)
 
     class Meta:
-        """Мета-параметры сериализатора"""
-
         model = RecipeIngredient
         fields = ('id', 'amount')
 
