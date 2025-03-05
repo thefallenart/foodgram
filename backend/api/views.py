@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.db.models import Sum
+from django.db.models import Sum, Prefetch
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -136,7 +136,7 @@ class UserViewSet(mixins.CreateModelMixin,
         user = request.user
 
         if user.avatar:
-            user.avatar.delete(save=False)  # Удаляем файл
+            user.avatar.delete(save=False)
             user.avatar = None
             user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -171,26 +171,35 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(ModelViewSet):
     """ViewSet для обработки запросов, связанных с рецептами."""
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.prefetch_related('ingredient_list').all()
     pagination_class = RecipePagination
     permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        """Метод для вызова определенного сериализатора. """
-
+        """Метод для вызова определенного сериализатора."""
         if self.action in ('list', 'retrieve'):
             return RecipeSerializer
         elif self.action in ('create', 'partial_update'):
             return CreateRecipeSerializer
 
     def get_serializer_context(self):
-        """Метод для передачи контекста. """
-
+        """Метод для передачи контекста."""
         context = super().get_serializer_context()
         context.update({'request': self.request})
         return context
+
+    def get_queryset(self):
+        """Оптимизация запросов с предзагрузкой избранного и корзины."""
+        user = self.request.user
+        queryset = Recipe.objects.all()
+        if user.is_authenticated:
+            queryset = queryset.prefetch_related(
+                Prefetch('favorites', queryset=Favorite.objects.filter(user=user)),
+                Prefetch('shopping_cart', queryset=ShoppingCart.objects.filter(user=user))
+            )
+        return queryset
 
     @action(
         detail=True,
@@ -200,14 +209,14 @@ class RecipeViewSet(ModelViewSet):
         url_name='favorite',
     )
     def favorite(self, request, pk):
-        """Метод для управления избранными подписками """
-
+        """Метод для управления избранными подписками"""
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
+
         if request.method == 'POST':
             if Favorite.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
-                    {'errors': f'Повторно - \"{recipe.name}\" добавить нельзя,'
+                    {'errors': f'Повторно - \"{recipe.name}\" добавить нельзя, '
                                f'он уже есть в избранном у пользователя'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -236,14 +245,13 @@ class RecipeViewSet(ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Метод для управления списком покупок"""
-
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
 
         if request.method == 'POST':
             if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
-                    {'errors': f'Повторно - \"{recipe.name}\" добавить нельзя,'
+                    {'errors': f'Повторно - \"{recipe.name}\" добавить нельзя, '
                                f'он уже есть в списке покупок'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -265,7 +273,6 @@ class RecipeViewSet(ModelViewSet):
     @staticmethod
     def ingredients_to_txt(ingredients):
         """Метод для объединения ингредиентов в список для загрузки"""
-
         shopping_list = ''
         for ingredient in ingredients:
             shopping_list += (
@@ -283,9 +290,7 @@ class RecipeViewSet(ModelViewSet):
         url_name='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
-        """Метод для загрузки ингредиентов и их количества
-         для выбранных рецептов"""
-
+        """Метод для загрузки ингредиентов и их количества для выбранных рецептов"""
         ingredients = RecipeIngredient.objects.filter(
             recipe__in=ShoppingCart.objects.filter(user=request.user).values_list('recipe', flat=True)
         ).values(

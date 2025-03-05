@@ -123,7 +123,6 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
-    amount = serializers.IntegerField(min_value=1)
 
     class Meta:
         """Мета-параметры сериализатора"""
@@ -152,20 +151,18 @@ class RecipeSerializer(serializers.ModelSerializer):
                   )
 
     def get_is_favorited(self, obj):
-        """Проверка на добавление в избранное."""
-        user = self.context.get("request").user
-        return (
-            user.is_authenticated
-            and Favorite.objects.filter(user=user, recipe=obj).exists()
-        )
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        favorites = obj.favorites.all()
+        return any(favorite.user == request.user for favorite in favorites)
 
     def get_is_in_shopping_cart(self, obj):
-        """Проверка на присутствие в корзине."""
-        user = self.context.get("request").user
-        return (
-            user.is_authenticated
-            and ShoppingCart.objects.filter(user=user, recipe=obj).exists()
-        )
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        shopping_cart = obj.shopping_cart.all()
+        return any(cart.user == request.user for cart in shopping_cart)
 
 
 class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
