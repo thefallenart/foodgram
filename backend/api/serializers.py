@@ -1,12 +1,13 @@
 import base64
 import uuid
+
 from django.core.files.base import ContentFile
-from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from rest_framework import serializers
 from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
+from api.validators import validate_new_password, validate_username
 from users.models import User
 
-from api.validators import validate_new_password, validate_username
 
 
 class Base64ImageField(serializers.ImageField):
