@@ -4,8 +4,8 @@ import uuid
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
-from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
 from api.validators import validate_new_password, validate_username
+from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import User
 
 
