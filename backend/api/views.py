@@ -95,7 +95,7 @@ class UserViewSet(mixins.CreateModelMixin,
             if subscription.exists():
                 return Response({'errors': 'Вы уже подписаны!'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            follow = Follow.objects.create(user=user, author=author)
+            Follow.objects.create(user=user, author=author)
             serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
