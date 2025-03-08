@@ -1,8 +1,8 @@
 import csv
 import os
-from foodgram import settings
 
 from django.core.management.base import BaseCommand
+from foodgram import settings
 from recipes.models import Ingredient
 
 
@@ -22,8 +22,8 @@ class Command(BaseCommand):
 
         with open(path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
-            next(reader)  # Пропускаем заголовок CSV
+            next(reader)
             for row in reader:
                 ingredient_create(row)
 
-        self.stdout.write(self.style.SUCCESS("✅ Ингредиенты успешно загружены!"))
+        self.stdout.write(self.style.SUCCESS("Выполнено!"))

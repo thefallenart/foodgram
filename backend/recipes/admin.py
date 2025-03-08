@@ -20,7 +20,8 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(models.Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'author', 'get_favorites_count', 'cooking_time', 'text', 'get_tags', 'image')
+    list_display = ('id', 'name', 'author', 'get_favorites_count',
+                    'cooking_time', 'text', 'get_tags', 'image')
     list_editable = ('name', 'cooking_time', 'text', 'image', 'author')
     readonly_fields = ('get_favorites_count',)
     list_filter = ('name', 'author', 'tags')
@@ -55,7 +56,8 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 
 @admin.register(models.Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'get_user_username', 'get_recipe_name', 'user', 'recipe')
+    list_display = ('id', 'get_user_username', 'get_recipe_name',
+                    'user', 'recipe')
     list_editable = ('user', 'recipe')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user', 'recipe')
@@ -72,7 +74,8 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(models.ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ('id', 'get_user_username', 'get_recipe_name', 'user', 'recipe')
+    list_display = ('id', 'get_user_username', 'get_recipe_name',
+                    'user', 'recipe')
     list_editable = ('user', 'recipe')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user', 'recipe')

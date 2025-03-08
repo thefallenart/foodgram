@@ -1,29 +1,24 @@
-from django.db.models import Sum, Prefetch
+from django.db.models import Prefetch, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag, Follow)
+from recipes.models import (Favorite, Follow, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import mixins, status, viewsets
-from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 from users.models import User
 
-from .filters import RecipeFilter, IngredientFilter
+from .filters import IngredientFilter, RecipeFilter
 from .pagination import RecipePagination
 from .premissions import IsAuthorOrReadOnly
-from .serializers import (UserCustomCreateSerializer,
-                          UserReadSerializer,
-                          ChangePasswordSerializer,
-                          AvatarSerializer,
-                          TagSerializer,
-                          IngredientSerializer,
-                          RecipeSerializer,
-                          CreateRecipeSerializer,
-                          AddFavoritesSerializer,
-                          FollowSerializer)
+from .serializers import (AddFavoritesSerializer, AvatarSerializer,
+                          ChangePasswordSerializer, CreateRecipeSerializer,
+                          FollowSerializer, IngredientSerializer,
+                          RecipeSerializer, TagSerializer,
+                          UserCustomCreateSerializer, UserReadSerializer)
 
 
 class UserViewSet(mixins.CreateModelMixin,

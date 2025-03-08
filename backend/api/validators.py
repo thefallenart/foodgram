@@ -2,7 +2,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions as django_exceptions
 from rest_framework import serializers
 
-
 INVALID_USERNAMES = {'me', 'monkey', 'idiot', 'bitch'}
 
 
@@ -26,8 +25,7 @@ def validate_new_password(new_password, current_password=None):
     - Должен соответствовать требованиям Django.
     """
     if current_password and new_password == current_password:
-        raise PasswordValidationError("Новый пароль должен отличаться от текущего.")
-
+        raise PasswordValidationError("Новый пароль не отличается.")
     try:
         validate_password(new_password)
     except django_exceptions.ValidationError as e:
