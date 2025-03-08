@@ -16,6 +16,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['84.201.161.108', 'localhost', '127.0.0.1', 'foodgramacheron.zapto.org']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://foodgramacheron.zapto.org',
+]
+
 
 # Application definition
 
