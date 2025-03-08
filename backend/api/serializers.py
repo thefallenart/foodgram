@@ -9,7 +9,6 @@ from api.validators import validate_new_password, validate_username
 from users.models import User
 
 
-
 class Base64ImageField(serializers.ImageField):
     """Кастомное поле для обработки изображений в формате base64."""
 
