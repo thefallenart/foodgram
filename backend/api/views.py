@@ -292,12 +292,7 @@ def short_link_redirect(request, short_code):
     """Перенаправляет пользователя на страницу рецепта по короткой ссылке."""
     hashids = Hashids(salt="foodgramacheron", min_length=5)
     recipe_id = hashids.decode(short_code)
-
     if not recipe_id:
-        return Response(
-            {"error": "Ссылка не найдена"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
+        return redirect('/')
     recipe = get_object_or_404(Recipe, id=recipe_id[0])
     return redirect(f'/recipes/{recipe.pk}/')

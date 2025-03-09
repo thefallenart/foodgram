@@ -17,5 +17,10 @@ urlpatterns = [
         r'^s/(?P<short_link>[a-zA-Z0-9]+)/$',
         views.short_link_redirect,
         name='short_link_redirect'
-    )
+    ),
+    path(
+        'recipes/<int:pk>/',
+        views.RecipeViewSet.as_view({'get': 'retrieve'}),
+        name='recipe-detail'
+    ),
 ]
