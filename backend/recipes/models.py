@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
+from hashids import Hashids
 
 User = get_user_model()
 
@@ -103,6 +104,20 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Дата публикации'
     )
+    short_link = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name='Короткая ссылка'
+    )
+
+    def save(self, *args, **kwargs):
+        """Генерация короткой ссылки при первом сохранении."""
+        if not self.short_link:
+            hashids = Hashids(salt="foodgramacheron", min_length=5)
+            self.short_link = hashids.encode(self.id if self.id else 0)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -171,33 +186,6 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f'{self.user} {self.recipe}'
-
-
-class TagInRecipe(models.Model):
-    """Создание модели тегов рецепта."""
-
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-        verbose_name='Теги',
-        help_text='Выберите теги рецепта'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        verbose_name='Рецепт',
-        help_text='Выберите рецепт')
-
-    class Meta:
-        verbose_name = 'Тег рецепта'
-        verbose_name_plural = 'Теги рецепта'
-        constraints = [
-            models.UniqueConstraint(fields=['tag', 'recipe'],
-                                    name='unique_tagrecipe')
-        ]
-
-    def __str__(self):
-        return f'{self.tag} {self.recipe}'
 
 
 class ShoppingCart(models.Model):

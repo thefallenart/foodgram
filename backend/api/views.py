@@ -1,7 +1,8 @@
 from django.db.models import Prefetch, Sum
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
+from hashids import Hashids
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import mixins, status, viewsets
@@ -274,3 +275,29 @@ class RecipeViewSet(ModelViewSet):
 
         shopping_list = self.ingredients_to_txt(ingredients)
         return HttpResponse(shopping_list, content_type='text/plain')
+
+    @action(detail=True, methods=['get'], url_path='get-link')
+    def get_link(self, request, pk=None):
+        """Генерирует короткую ссылку на рецепт."""
+        recipe = self.get_object()
+
+        hashids = Hashids(salt="foodgramacheron", min_length=5)
+        short_code = hashids.encode(recipe.id)
+
+        short_link = f"https://foodgramacheron.zapto.org/s/{short_code}"
+        return Response({"short-link": short_link}, status=status.HTTP_200_OK)
+
+
+def short_link_redirect(request, short_code):
+    """Перенаправляет пользователя на страницу рецепта по короткой ссылке."""
+    hashids = Hashids(salt="foodgramacheron", min_length=5)
+    recipe_id = hashids.decode(short_code)
+
+    if not recipe_id:
+        return Response(
+            {"error": "Ссылка не найдена"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    recipe = get_object_or_404(Recipe, id=recipe_id[0])
+    return redirect(f'/recipes/{recipe.pk}/')
