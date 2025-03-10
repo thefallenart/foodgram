@@ -61,12 +61,12 @@ class UserViewSet(mixins.CreateModelMixin,
     @action(
         detail=False,
         methods=('get',),
-        permission_classes=(IsAuthenticated, ),
+        permission_classes=(IsAuthenticated,),
         url_path='subscriptions',
         url_name='subscriptions',
     )
     def subscriptions(self, request):
-        queryset = User.objects.filter(following__user=self.request.user)
+        queryset = self.request.user.following.all()
         pages = self.paginate_queryset(queryset)
 
         if pages:
@@ -98,19 +98,18 @@ class UserViewSet(mixins.CreateModelMixin,
             )
 
         if request.method == 'POST':
-            if author.following.filter(user=user).exists():
+            if user.followers.filter(author=author).exists():
                 return Response(
-                    {'detail': 'Вы уже подписаны.'},
+                    {'detail': 'Уже подписаны.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Follow.objects.create(user=user, author=author)
             serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        elif request.method == 'DELETE':
-            subscription = author.followers.filter(user=user)
-            if subscription.exists():
-                subscription.delete()
+        if request.method == 'DELETE':
+            if user.followers.filter(author=author).exists():
+                user.followers.filter(author=author).delete()
                 return Response(
                     {'detail': 'Вы отписались.'},
                     status=status.HTTP_204_NO_CONTENT
