@@ -71,7 +71,7 @@ class UserViewSet(mixins.CreateModelMixin,
             serializer = FollowSerializer(pages, many=True,
                                           context={'request': request})
             return self.get_paginated_response(serializer.data)
-        return Response('Вы ни на кого не подписаны.',
+        return Response('Вы никого не отслеживаете.',
                         status=status.HTTP_400_BAD_REQUEST)
 
     @action(

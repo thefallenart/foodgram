@@ -24,13 +24,13 @@ class RecipeFilter(django_filters.FilterSet):
         method='is_recipe_in_shoppingcart_filter')
 
     def is_recipe_in_favorites_filter(self, queryset, name, value):
-        if value == 1:
+        if value == 1 and self.request.user.is_authenticated:
             user = self.request.user
             return queryset.filter(favorites__user_id=user.id)
         return queryset
 
     def is_recipe_in_shoppingcart_filter(self, queryset, name, value):
-        if value == 1:
+        if value == 1 and self.request.user.is_authenticated:
             user = self.request.user
             return queryset.filter(shopping_cart__user_id=user.id)
         return queryset
