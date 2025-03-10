@@ -61,12 +61,12 @@ class UserViewSet(mixins.CreateModelMixin,
     @action(
         detail=False,
         methods=('get',),
-        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated, ),
         url_path='subscriptions',
         url_name='subscriptions',
     )
     def subscriptions(self, request):
-        queryset = self.request.user.following.all()
+        queryset = User.objects.filter(following__user=self.request.user)
         pages = self.paginate_queryset(queryset)
 
         if pages:
@@ -97,8 +97,10 @@ class UserViewSet(mixins.CreateModelMixin,
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        subscription = Follow.objects.filter(user=user, author=author)
+
         if request.method == 'POST':
-            if user.followers.filter(author=author).exists():
+            if subscription.exists():
                 return Response(
                     {'detail': 'Уже подписаны.'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -108,8 +110,8 @@ class UserViewSet(mixins.CreateModelMixin,
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
-            if user.followers.filter(author=author).exists():
-                user.followers.filter(author=author).delete()
+            if subscription.exists():
+                subscription.delete()
                 return Response(
                     {'detail': 'Вы отписались.'},
                     status=status.HTTP_204_NO_CONTENT

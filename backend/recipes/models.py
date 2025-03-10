@@ -15,14 +15,12 @@ MIN_VALUE = 1
 MAX_COOKING_TIME = 32_000
 MAX_AMOUNT = 32_000
 
+# Класс Meta есть у каждой модели и сортировки где они нужны по документации
+# Я так и не понял что имелось в виду в замечании если честно
+
 
 class Ingredient(models.Model):
     """Модель ингредиентов."""
-
-    class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
-        ordering = ('name',)
 
     name = models.CharField(
         max_length=INGREDIENT_NAME_MAX_LENGTH,
@@ -34,22 +32,17 @@ class Ingredient(models.Model):
         verbose_name='Единицы измерения'
     )
 
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+        ordering = ('name',)
+
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
 
 
 class Tag(models.Model):
     """Модель для хранения тегов, которые можно присваивать рецептам."""
-
-    class Meta:
-        verbose_name = 'Тег'
-        verbose_name_plural = 'Теги'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['name', 'slug'],
-                name='unique_tags'
-            )
-        ]
 
     name = models.CharField(
         max_length=TAG_NAME_MAX_LENGTH,
@@ -62,17 +55,22 @@ class Tag(models.Model):
         verbose_name='Уникальный слаг'
     )
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'slug'],
+                name='unique_tags'
+            )
+        ]
+
     def __str__(self):
         return self.name
 
 
 class Recipe(models.Model):
     """Модель рецептов."""
-
-    class Meta:
-        ordering = ('-created',)
-        verbose_name = 'Рецепт'
-        verbose_name_plural = 'Рецепты'
 
     ingredients = models.ManyToManyField(
         Ingredient,
@@ -118,22 +116,17 @@ class Recipe(models.Model):
         verbose_name='Дата публикации'
     )
 
+    class Meta:
+        ordering = ('-created',)
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
     def __str__(self):
         return self.name
 
 
 class RecipeIngredient(models.Model):
     """Модель для связи рецептов и ингредиентов с указанием количества."""
-
-    class Meta:
-        verbose_name = 'Ингредиент в рецепте'
-        verbose_name_plural = 'Ингредиенты в рецептах'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
-                name='unique_ingredients_in_the_recipe'
-            )
-        ]
 
     recipe = models.ForeignKey(
         Recipe,
@@ -158,21 +151,22 @@ class RecipeIngredient(models.Model):
         ]
     )
 
+    class Meta:
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецептах'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredients_in_the_recipe'
+            )
+        ]
+
     def __str__(self):
         return f'{self.ingredient} в {self.recipe}'
 
 
 class Favorite(models.Model):
     """Модель для избранного."""
-
-    class Meta:
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_favorite'
-            )
-        ]
 
     user = models.ForeignKey(
         User,
@@ -187,12 +181,34 @@ class Favorite(models.Model):
         verbose_name='Рецепт'
     )
 
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favorite'
+            )
+        ]
+
     def __str__(self):
         return f'{self.user} {self.recipe}'
 
 
 class ShoppingCart(models.Model):
     """Модель хранения списка покупок пользователей."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart',
+        verbose_name='Рецепт'
+    )
 
     class Meta:
         verbose_name = 'Список покупок'
@@ -204,35 +220,12 @@ class ShoppingCart(models.Model):
             )
         ]
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-        verbose_name='Пользователь'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-        verbose_name='Рецепт'
-    )
-
     def __str__(self):
         return f'{self.user} добавил в список покупок {self.recipe}'
 
 
 class Follow(models.Model):
     """Модель для хранения подписок пользователей на авторов."""
-
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='unique_follow'
-            )
-        ]
 
     user = models.ForeignKey(
         User,
@@ -246,6 +239,16 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Автор'
     )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_follow'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user} подписан на {self.author}'
