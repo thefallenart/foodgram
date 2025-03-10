@@ -63,7 +63,6 @@ class UserViewSet(mixins.CreateModelMixin,
         url_name='subscriptions',
     )
     def subscriptions(self, request):
-
         queryset = User.objects.filter(following__user=self.request.user)
         pages = self.paginate_queryset(queryset)
 
@@ -74,7 +73,7 @@ class UserViewSet(mixins.CreateModelMixin,
             return self.get_paginated_response(serializer.data)
 
         return Response(
-            {'message': 'Вы никого не отслеживаете.'},
+            {'detail': 'Вы никого не отслеживаете.'},
             status=status.HTTP_200_OK
         )
 
@@ -90,15 +89,19 @@ class UserViewSet(mixins.CreateModelMixin,
         author = get_object_or_404(User, id=pk)
 
         if user == author:
-            return Response({'errors': 'Нельзя подписаться на себя!'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'На себя нельзя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         subscription = Follow.objects.filter(user=user, author=author)
 
         if request.method == 'POST':
             if subscription.exists():
-                return Response({'errors': 'Вы уже подписаны!'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'detail': 'Уже подписаны.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             Follow.objects.create(user=user, author=author)
             serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -106,10 +109,14 @@ class UserViewSet(mixins.CreateModelMixin,
         if request.method == 'DELETE':
             if subscription.exists():
                 subscription.delete()
-                return Response({'message': 'Вы отписались'},
-                                status=status.HTTP_204_NO_CONTENT)
-            return Response({'errors': 'Вы не подписаны.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'detail': 'Вы отписались.'},
+                    status=status.HTTP_204_NO_CONTENT
+                )
+            return Response(
+                {'detail': 'Вы не подписаны.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(
         detail=False,

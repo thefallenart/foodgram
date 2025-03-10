@@ -81,7 +81,7 @@ class AvatarSerializer(serializers.ModelSerializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    """Сериализатор для смены пароля"""
+    """Для смены пароля"""
 
     current_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
@@ -92,7 +92,6 @@ class ChangePasswordSerializer(serializers.Serializer):
     }
 
     def validate(self, attrs):
-        """Проверка корректности введенных данных."""
         user = self.context.get("user")
         if not user or not isinstance(user, User):
             raise serializers.ValidationError("Ошибка аутентификации.")
