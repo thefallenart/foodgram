@@ -5,7 +5,6 @@ from recipes.models import Ingredient, Recipe, Tag
 
 
 class IngredientFilter(FilterSet):
-    """Поиск по названию ингредиента."""
 
     name = rest_framework.CharFilter(lookup_expr='istartswith')
 
@@ -15,7 +14,6 @@ class IngredientFilter(FilterSet):
 
 
 class RecipeFilter(django_filters.FilterSet):
-    """ Фильтр для отображения избранного и списка покупок"""
     tags = django_filters.filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
         field_name='tags__slug',
