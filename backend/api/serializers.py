@@ -141,13 +141,6 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class ShortRecipeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-
-
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для рецептов."""
 
@@ -189,6 +182,13 @@ class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'amount')
+
+
+class ShortRecipeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
