@@ -82,7 +82,6 @@ class UserViewSet(mixins.CreateModelMixin,
         url_name='subscribe',
     )
     def subscribe(self, request, pk):
-
         user = request.user
         author = get_object_or_404(User, id=pk)
 
@@ -100,13 +99,13 @@ class UserViewSet(mixins.CreateModelMixin,
             serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if subscription.exists():
-            subscription.delete()
-            return Response({'message': 'Вы отписались'},
-                            status=status.HTTP_204_NO_CONTENT)
-
-        return Response({'errors': 'Вы не подписаны на этого пользователя'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'DELETE':
+            if subscription.exists():
+                subscription.delete()
+                return Response({'message': 'Вы отписались'},
+                                status=status.HTTP_204_NO_CONTENT)
+            return Response({'errors': 'Вы не подписаны.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=False,
