@@ -4,8 +4,9 @@ import uuid
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+
 from api.validators import validate_username, validate_new_password
-from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import User
 
 
@@ -47,12 +48,9 @@ class UserReadSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         """Проверка подписки."""
 
-        if (self.context.get('request')
-           and not self.context['request'].user.is_anonymous):
-            return Follow.objects.filter(
-                user=self.context['request'].user,
-                author=obj
-            ).exists()
+        request = self.context.get('request')
+        if request and not request.user.is_anonymous:
+            return request.user.following.filter(author=obj).exists()
         return False
 
 

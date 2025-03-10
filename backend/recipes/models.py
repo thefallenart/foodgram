@@ -1,8 +1,19 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 User = get_user_model()
+
+
+TAG_NAME_MAX_LENGTH = 50
+SLUG_MAX_LENGTH = 100
+RECIPE_NAME_MAX_LENGTH = 256
+INGREDIENT_NAME_MAX_LENGTH = 200
+MEASUREMENT_UNIT_MAX_LENGTH = 200
+
+MIN_VALUE = 1
+MAX_COOKING_TIME = 32_000
+MAX_AMOUNT = 32_000
 
 
 class Ingredient(models.Model):
@@ -14,12 +25,12 @@ class Ingredient(models.Model):
         ordering = ('name',)
 
     name = models.CharField(
-        max_length=200,
+        max_length=INGREDIENT_NAME_MAX_LENGTH,
         db_index=True,
         verbose_name='Название ингредиента'
     )
     measurement_unit = models.CharField(
-        max_length=200,
+        max_length=MEASUREMENT_UNIT_MAX_LENGTH,
         verbose_name='Единицы измерения'
     )
 
@@ -41,13 +52,12 @@ class Tag(models.Model):
         ]
 
     name = models.CharField(
-        max_length=50,
+        max_length=TAG_NAME_MAX_LENGTH,
         unique=True,
         verbose_name='Название тега'
     )
-
     slug = models.SlugField(
-        max_length=100,
+        max_length=SLUG_MAX_LENGTH,
         unique=True,
         verbose_name='Уникальный слаг'
     )
@@ -81,7 +91,7 @@ class Recipe(models.Model):
         blank=True
     )
     name = models.CharField(
-        max_length=256,  # В документации указано <= 256
+        max_length=RECIPE_NAME_MAX_LENGTH,
         verbose_name='Название рецепта'
     )
     text = models.TextField(
@@ -90,7 +100,11 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления (в минутах)',
         validators=[
-            MinValueValidator(1, message='Должно быть не менее 1 минуты!')
+            MinValueValidator(
+                MIN_VALUE,
+                message='Должно быть не менее 1 минуты!'
+            ),
+            MaxValueValidator(MAX_COOKING_TIME, message='Слишком долго!')
         ]
     )
     author = models.ForeignKey(
@@ -136,7 +150,11 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
         validators=[
-            MinValueValidator(1, message='Количество должно быть не менее 1!')
+            MinValueValidator(
+                MIN_VALUE,
+                message='Количество должно быть не менее 1!'
+            ),
+            MaxValueValidator(MAX_AMOUNT, message='Слишком большое количество')
         ]
     )
 
@@ -146,6 +164,15 @@ class RecipeIngredient(models.Model):
 
 class Favorite(models.Model):
     """Модель для избранного."""
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favorite'
+            )
+        ]
 
     user = models.ForeignKey(
         User,
@@ -159,15 +186,6 @@ class Favorite(models.Model):
         related_name='favorites',
         verbose_name='Рецепт'
     )
-
-    class Meta:
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_favorite'
-            )
-        ]
 
     def __str__(self):
         return f'{self.user} {self.recipe}'
