@@ -20,8 +20,6 @@ isort==6.0.1
 oauthlib==3.2.2
 packaging==24.2
 pillow==11.1.0
-progressbar==2.5
-progressbar2==4.5.0
 psycopg2-binary==2.9.1
 pycparser==2.22
 PyJWT==2.10.1
