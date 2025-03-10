@@ -98,7 +98,7 @@ class UserViewSet(mixins.CreateModelMixin,
         subscription = user.following.filter(author=author).exists()
 
         if request.method == 'POST':
-            if subscription.exists():
+            if subscription:
                 return Response(
                     {'detail': 'Уже подписаны.'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -108,8 +108,8 @@ class UserViewSet(mixins.CreateModelMixin,
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
-            if subscription.exists():
-                subscription.delete()
+            if subscription:
+                user.following.filter(author=author).delete()
                 return Response(
                     {'detail': 'Вы отписались.'},
                     status=status.HTTP_204_NO_CONTENT
