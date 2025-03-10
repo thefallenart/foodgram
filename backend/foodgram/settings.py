@@ -157,3 +157,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 FILE_NAME = 'shopping_cart.txt'
 
 CSV_FILES_DIR = os.path.join(BASE_DIR, 'data')
+
+BASE_URL = 'https://foodgramacheron.zapto.org/s/'

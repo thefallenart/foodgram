@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from users.models import User
+from foodgram import settings
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import RecipePagination
@@ -291,7 +292,7 @@ class RecipeViewSet(ModelViewSet):
         hashids = Hashids(salt='foodgramacheron', min_length=5)
         short_code = hashids.encode(recipe.id)
 
-        short_link = f'https://foodgramacheron.zapto.org/s/{short_code}'
+        short_link = f'{settings.BASE_URL}{short_code}'
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
 
