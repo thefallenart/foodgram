@@ -104,20 +104,6 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Дата публикации'
     )
-    short_link = models.CharField(
-        max_length=10,
-        unique=True,
-        blank=True,
-        null=True,
-        verbose_name='Короткая ссылка'
-    )
-
-    def save(self, *args, **kwargs):
-        """Генерация короткой ссылки при первом сохранении."""
-        if not self.short_link:
-            hashids = Hashids(salt="foodgramacheron", min_length=5)
-            self.short_link = hashids.encode(self.id if self.id else 0)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
