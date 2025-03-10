@@ -38,14 +38,14 @@ class UserViewSet(mixins.CreateModelMixin,
     @action(detail=False, methods=['get'],
             pagination_class=None,
             permission_classes=(IsAuthenticated,))
-    def me(self, request):
+    def myself(self, request):
         serializer = UserReadSerializer(request.user)
         return Response(serializer.data,
                         status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
-    def set_password(self, request):
+    def change_password(self, request):
         """Обновление пароля текущего пользователя."""
         serializer = ChangePasswordSerializer(
             data=request.data, context={"user": request.user}
@@ -63,16 +63,23 @@ class UserViewSet(mixins.CreateModelMixin,
         url_name='subscriptions',
     )
     def subscriptions(self, request):
-        """Метод для создания страницы подписок"""
+        """Метод для создания страницы подписок."""
 
-        queryset = User.objects.filter(following__user=self.request.user)
-        if queryset:
-            pages = self.paginate_queryset(queryset)
-            serializer = FollowSerializer(pages, many=True,
-                                          context={'request': request})
-            return self.get_paginated_response(serializer.data)
-        return Response('Вы ни на кого не подписаны.',
-                        status=status.HTTP_400_BAD_REQUEST)
+        if not User.objects.filter(following__user=request.user).exists():
+            return Response(
+                {"message": "Вы ни на кого не подписаны."},
+                status=status.HTTP_200_OK
+            )
+
+        queryset = User.objects.filter(following__user=request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(
+            pages,
+            many=True,
+            context={'request': request}
+        )
+
+        return self.get_paginated_response(serializer.data)
 
     @action(
         detail=True,
