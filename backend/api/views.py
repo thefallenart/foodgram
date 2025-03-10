@@ -239,6 +239,14 @@ class RecipeViewSet(ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добавление/удаление рецепта из избранного."""
+        recipe = get_object_or_404(Recipe, pk=pk)
+
+        if recipe.author == request.user:
+            return Response(
+                {'errors': f'Нельзя добавит свой "{recipe.name}" в избранное'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         return self._handle_action(
             request, Favorite, AddFavoritesSerializer,
             'Рецепт "{}" уже есть в избранном.', pk
