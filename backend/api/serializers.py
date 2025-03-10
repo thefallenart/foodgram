@@ -273,6 +273,17 @@ class AddFavoritesSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
+    def validate(self, data):
+        recipe = self.instance
+        request = self.context.get('request')
+
+        if recipe.author == request.user:
+            raise serializers.ValidationError(
+                f'Нельзя добавить свой "{recipe.name}" в избранное'
+            )
+
+        return data
+
 
 class FollowSerializer(UserReadSerializer):
     recipes = serializers.SerializerMethodField(

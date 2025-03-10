@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from hashids import Hashids
+
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import mixins, status, viewsets
@@ -94,7 +95,7 @@ class UserViewSet(mixins.CreateModelMixin,
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        subscription = Follow.objects.filter(user=user, author=author)
+        subscription = user.following.filter(author=author)
 
         if request.method == 'POST':
             if subscription.exists():
@@ -199,11 +200,11 @@ class RecipeViewSet(ModelViewSet):
             queryset = queryset.prefetch_related(
                 Prefetch(
                     'favorites',
-                    queryset=Favorite.objects.filter(user=user)
+                    queryset=user.favorites.all(),
                 ),
                 Prefetch(
                     'shopping_cart',
-                    queryset=ShoppingCart.objects.filter(user=user)
+                    queryset=user.shopping_cart.all()
                 )
             )
 
@@ -239,14 +240,6 @@ class RecipeViewSet(ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добавление/удаление рецепта из избранного."""
-        recipe = get_object_or_404(Recipe, pk=pk)
-
-        if recipe.author == request.user:
-            return Response(
-                {'errors': f'Нельзя добавит свой "{recipe.name}" в избранное'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         return self._handle_action(
             request, Favorite, AddFavoritesSerializer,
             'Рецепт "{}" уже есть в избранном.', pk
