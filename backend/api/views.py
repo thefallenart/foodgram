@@ -63,16 +63,20 @@ class UserViewSet(mixins.CreateModelMixin,
         url_name='subscriptions',
     )
     def subscriptions(self, request):
-        """создание страницы подписок"""
 
         queryset = User.objects.filter(following__user=self.request.user)
-        if queryset:
-            pages = self.paginate_queryset(queryset)
-            serializer = FollowSerializer(pages, many=True,
-                                          context={'request': request})
+        pages = self.paginate_queryset(queryset)
+
+        if pages:
+            serializer = FollowSerializer(
+                pages, many=True, context={'request': request}
+            )
             return self.get_paginated_response(serializer.data)
-        return Response('Вы никого не отслеживаете.',
-                        status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {'message': 'Вы никого не отслеживаете.'},
+            status=status.HTTP_200_OK
+        )
 
     @action(
         detail=True,
