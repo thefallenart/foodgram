@@ -4,6 +4,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from hashids import Hashids
 
+from foodgram import settings
+
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import mixins, status, viewsets
@@ -12,7 +14,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from users.models import User
-from foodgram import settings
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import RecipePagination
