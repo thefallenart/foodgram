@@ -38,14 +38,14 @@ class UserViewSet(mixins.CreateModelMixin,
     @action(detail=False, methods=['get'],
             pagination_class=None,
             permission_classes=(IsAuthenticated,))
-    def myself(self, request):
+    def me(self, request):
         serializer = UserReadSerializer(request.user)
         return Response(serializer.data,
                         status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
-    def change_password(self, request):
+    def set_password(self, request):
         """Обновление пароля текущего пользователя."""
         serializer = ChangePasswordSerializer(
             data=request.data, context={"user": request.user}

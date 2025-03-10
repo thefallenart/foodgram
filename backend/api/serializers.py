@@ -144,8 +144,8 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для рецептов."""
 
-    author = UserSerializer()
     tags = TagSerializer(many=True)
+    author = UserSerializer()
     ingredients = IngredientInRecipeSerializer(
         source='ingredient_list', many=True)
     is_favorited = serializers.SerializerMethodField()
@@ -182,13 +182,6 @@ class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'amount')
-
-
-class ShortRecipeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
@@ -235,10 +228,10 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
 
     def create(self, validated_data):
-        user = self.context.get('request').user
-        tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
 
+        user = self.context.get('request').user
         recipe = Recipe.objects.create(**validated_data, author=user)
         self.create_ingredients(ingredients, recipe)
         self.create_tags(tags, recipe)
@@ -256,6 +249,13 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             instance.tags.set(tags)
 
         return super().update(instance, validated_data)
+
+
+class ShortRecipeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class AddFavoritesSerializer(serializers.ModelSerializer):
