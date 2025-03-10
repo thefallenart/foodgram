@@ -97,19 +97,18 @@ class UserViewSet(mixins.CreateModelMixin,
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        subscription = user.following.filter(author=author)
-
         if request.method == 'POST':
-            if subscription.exists():
+            if author.following.filter(user=user).exists():
                 return Response(
-                    {'detail': 'Уже подписаны.'},
+                    {'detail': 'Вы уже подписаны.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Follow.objects.create(user=user, author=author)
             serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
+        elif request.method == 'DELETE':
+            subscription = author.followers.filter(user=user)
             if subscription.exists():
                 subscription.delete()
                 return Response(
