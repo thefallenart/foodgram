@@ -43,13 +43,9 @@ class User(AbstractUser):
     )
 
     class Meta:
-        """Настройки модели пользователя."""
-
         ordering = ('username',)
         verbose_name = 'Учетная запись'
         verbose_name_plural = 'Учетные записи'
 
     def __str__(self):
-        """Возвращает строковое представление пользователя."""
-
         return self.username

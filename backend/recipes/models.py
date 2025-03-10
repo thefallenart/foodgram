@@ -145,7 +145,7 @@ class RecipeIngredient(models.Model):
 
 
 class Favorite(models.Model):
-    """Модель для создания избранного."""
+    """Модель для избранного."""
 
     user = models.ForeignKey(
         User,
@@ -174,7 +174,7 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
-    """Модель для хранения списка покупок пользователей."""
+    """Модель хранения списка покупок пользователей."""
 
     class Meta:
         verbose_name = 'Список покупок'
