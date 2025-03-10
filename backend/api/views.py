@@ -48,7 +48,7 @@ class UserViewSet(mixins.CreateModelMixin,
     def set_password(self, request):
         """Смена пароля."""
         serializer = ChangePasswordSerializer(
-            data=request.data, context={"user": request.user}
+            data=request.data, context={'user': request.user}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -133,7 +133,7 @@ class UserViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response({"avatar": user.avatar.url}, status=status.HTTP_200_OK)
+        return Response({'avatar': user.avatar.url}, status=status.HTTP_200_OK)
 
     @avatar.mapping.delete
     def delete_avatar(self, request):
@@ -295,16 +295,16 @@ class RecipeViewSet(ModelViewSet):
         """Генерирует короткую ссылку на рецепт."""
         recipe = self.get_object()
 
-        hashids = Hashids(salt="foodgramacheron", min_length=5)
+        hashids = Hashids(salt='foodgramacheron', min_length=5)
         short_code = hashids.encode(recipe.id)
 
-        short_link = f"https://foodgramacheron.zapto.org/s/{short_code}"
-        return Response({"short-link": short_link}, status=status.HTTP_200_OK)
+        short_link = f'https://foodgramacheron.zapto.org/s/{short_code}'
+        return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
 
 def short_link_redirect(request, short_code):
     """Перенаправляет пользователя на страницу рецепта по короткой ссылке."""
-    hashids = Hashids(salt="foodgramacheron", min_length=5)
+    hashids = Hashids(salt='foodgramacheron', min_length=5)
     recipe_id = hashids.decode(short_code)
     if not recipe_id:
         return redirect('/')

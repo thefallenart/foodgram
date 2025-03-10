@@ -10,16 +10,20 @@ from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import User
 
 
+MINIMUM = 1
+MAXIMUM = 32_000
+
+
 class Base64ImageField(serializers.ImageField):
     """Кастомное поле для обработки изображений в формате base64."""
 
     def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith("data:image"):
-            format_str, img_str = data.split(";base64,")
-            ext = format_str.split("/")[-1]
+        if isinstance(data, str) and data.startswith('data:image'):
+            format_str, img_str = data.split(';base64,')
+            ext = format_str.split('/')[-1]
             data = ContentFile(
                 base64.b64decode(img_str),
-                name=f"{uuid.uuid4()}.{ext}"
+                name=f'{uuid.uuid4()}.{ext}'
             )
         return super().to_internal_value(data)
 
@@ -69,7 +73,7 @@ class AvatarSerializer(serializers.ModelSerializer):
         """Обновляет аватар пользователя."""
         avatar_data = validated_data.get('avatar', None)
         if avatar_data:
-            filename = f"user_{instance.id}_avatar.png"
+            filename = f'user_{instance.id}_avatar.png'
             instance.avatar.save(filename, avatar_data, save=True)
         return instance
 
@@ -85,21 +89,21 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True)
 
     messages = {
-        "wrong_password": "Неправильный текущий пароль.",
-        "same_password": "Новый пароль должен отличаться от текущего.",
+        'wrong_password': 'Неправильный текущий пароль.',
+        'same_password': 'Новый пароль должен отличаться от текущего.',
     }
 
     def validate(self, attrs):
-        user = self.context.get("user")
+        user = self.context.get('user')
         if not user or not isinstance(user, User):
-            raise serializers.ValidationError("Ошибка аутентификации.")
+            raise serializers.ValidationError('Ошибка аутентификации.')
 
-        current_password = attrs.get("current_password")
-        new_password = attrs.get("new_password")
+        current_password = attrs.get('current_password')
+        new_password = attrs.get('new_password')
 
         if not user.check_password(current_password):
             raise serializers.ValidationError({
-                "current_password": self.messages["wrong_password"]
+                'current_password': self.messages['wrong_password']
             })
 
         validate_new_password(new_password, current_password)
@@ -107,8 +111,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def save(self, **kwargs):
         """Обновляет пароль пользователя."""
-        user = self.context["user"]
-        user.set_password(self.validated_data["new_password"])
+        user = self.context['user']
+        user.set_password(self.validated_data['new_password'])
         user.save()
         return user
 
@@ -159,22 +163,23 @@ class RecipeSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
-        favorites = obj.favorites.all()
-        return any(favorite.user == request.user for favorite in favorites)
+        return obj.favorites.filter(user=request.user).exists()
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
-        shopping_cart = obj.shopping_cart.all()
-        return any(cart.user == request.user for cart in shopping_cart)
+        return obj.shopping_cart.filter(user=request.user).exists()
 
 
 class CreateIngredientsInRecipeSerializer(serializers.ModelSerializer):
     """Для ингредиентов в рецептах."""
 
     id = serializers.IntegerField()
-    amount = serializers.IntegerField(min_value=1)
+    amount = serializers.IntegerField(
+        min_value=MINIMUM,
+        max_value=MAXIMUM
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -196,6 +201,9 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         many=True, queryset=Tag.objects.all()
     )
     image = Base64ImageField(use_url=True)
+    cooking_time = serializers.IntegerField(
+        min_value=MINIMUM, max_value=MAXIMUM
+    )
 
     class Meta:
         model = Recipe
@@ -221,12 +229,15 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return data
 
     def create_ingredients(self, ingredients, recipe):
-        for element in ingredients:
-            ingredient = Ingredient.objects.get(pk=element['id'])
-            amount = element['amount']
-            RecipeIngredient.objects.create(
-                ingredient=ingredient, recipe=recipe, amount=amount
+        recipe_ingredients = [
+            RecipeIngredient(
+                ingredient=Ingredient.objects.get(pk=element['id']),
+                recipe=recipe,
+                amount=element['amount']
             )
+            for element in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
     def create_tags(self, tags, recipe):
         recipe.tags.set(tags)
@@ -277,8 +288,8 @@ class FollowSerializer(UserReadSerializer):
                   'is_subscribed', 'recipes', 'recipes_count',)
 
     def get_recipes(self, obj):
-        request = self.context.get("request")
-        recipes_limit = request.query_params.get("recipes_limit")
+        request = self.context.get('request')
+        recipes_limit = request.query_params.get('recipes_limit')
         recipes = obj.recipes.all()
         if recipes_limit:
             try:
