@@ -97,7 +97,7 @@ class UserViewSet(mixins.CreateModelMixin,
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        subscription = Follow.objects.filter(user=user, author=author)
+        subscription = user.followers.filter(author=author)
 
         if request.method == 'POST':
             if subscription.exists():
