@@ -2,8 +2,8 @@ from django.db.models import Prefetch, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
-from hashids import Hashids
 
+from hashids import Hashids
 from foodgram import settings
 
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
