@@ -87,7 +87,7 @@ http://localhost/admin
 ## Настройка CI/CD
 1.Файл workflow уже готов 
 2.Для адаптации его на своем сервере добавьте Secrets в GitHub Actions:
-
+```
 DOCKER_USERNAME - имя пользователя в DockerHub
 DOCKER_PASSWORD - пароль пользователя в DockerHub
 HOST - ip_address удалённого сервера
@@ -96,7 +96,7 @@ SSH_KEY - приватный ssh-ключ сервера
 SSH_PASSPHRASE - Пароль для сервера
 TELEGRAM_TO - ID аккаунта телеграм
 TELEGRAM_TOKEN - токен бота в телеграме на которого придет уведомление об успешном деплое 
-
+```
 ## Запуск на сервере
 1.Установите на сервере Docker и Docker Compose. Для запуска необходимо установить Docker и Docker Compose
 ```
