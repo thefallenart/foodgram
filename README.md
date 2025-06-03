@@ -193,5 +193,5 @@ POST /api/users/{id}/subscribe/
 }
 ```
 ## Автор
-Кирилл - TheFallenArt
+[Кирилл - thefallenart](https://github.com/thefallenart)
 
