@@ -157,7 +157,7 @@ POST /api/users/
   "email": "user@example.com",
   "username": "new_user",
   "first_name": "John",
-  "last_name": "Doe",
+  "last_name": "Doee",
   "password": "securepassword123"
 }
 ```
